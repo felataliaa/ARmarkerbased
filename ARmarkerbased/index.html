@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Cinemaps WebAR - Marker Based</title>
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <script src="https://cdn.rawgit.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    <style>
+      body { 
+        margin: 0; 
+        overflow: hidden; 
+        font-family: 'Segoe UI', sans-serif;
+        background: #000;
+        touch-action: manipulation;
+      }
+
+      /* Marker Instructions */
+      #markerInstructions {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100vw; height: 100vh;
+        background: rgba(0,0,0,0.9);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+        color: white;
+        text-align: center;
+        padding: 20px;
+        box-sizing: border-box;
+      }
+      
+      .marker-icon { 
+        font-size: 60px; 
+        margin-bottom: 20px; 
+        animation: bounce 2s infinite;
+      }
+      
+      .marker-text { 
+        font-size: 18px; 
+        font-weight: bold; 
+        margin-bottom: 15px;
+        max-width: 320px;
+      }
+      
+      .marker-subtitle { 
+        font-size: 14px; 
+        opacity: 0.8; 
+        max-width: 300px;
+        line-height: 1.4;
+        margin-bottom: 25px;
+      }
+
+      .marker-sample {
+        width: 120px;
+        height: 120px;
+        background: white;
+        border: 3px solid #333;
+        margin: 15px auto;
+        background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiBmaWxsPSJ3aGl0ZSIvPgo8cmVjdCB4PSIxMCIgeT0iMTAiIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgZmlsbD0iYmxhY2siLz4KPHJlY3QgeD0iMjAiIHk9IjIwIiB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIGZpbGw9IndoaXRlIi8+CjxyZWN0IHg9IjMwIiB5PSIzMCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSJibGFjayIvPgo8cmVjdCB4PSI0MCIgeT0iNDAiIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCIgZmlsbD0id2hpdGUiLz4KPC9zdmc+');
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+        border-radius: 8px;
+      }
+
+      .close-instructions {
+        background: rgba(255,255,255,0.2);
+        border: 1px solid rgba(255,255,255,0.3);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 25px;
+        cursor: pointer;
+        font-size: 14px;
+        margin-top: 15px;
+        backdrop-filter: blur(10px);
+      }
+
+      @keyframes bounce {
+        0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+        40% { transform: translateY(-10px); }
+        60% { transform: translateY(-5px); }
+      }
+
+      /* Title */
+      #ui {
+        position: fixed;
+        top: 15px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0,0,0,0.8);
+        padding: 10px 20px;
+        border-radius: 20px;
+        z-index: 999;
+        color: white;
+        font-size: 16px;
+        font-weight: 600;
+        text-shadow: 0px 2px 8px rgba(0,0,0,0.8);
+        max-width: 70vw;
+        text-align: center;
+        backdrop-filter: blur(10px);
+      }
+
+      /* Status Indicator */
+      #status {
+        position: fixed;
+        top: 70px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(255, 0, 0, 0.8);
+        padding: 8px 16px;
+        border-radius: 15px;
+        z-index: 999;
+        color: white;
+        font-size: 12px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+      }
+
+      .status-found {
+        background: rgba(0, 255, 0, 0.8) !important;
+      }
+
+      /* Navigation Buttons */
+      .nav-button {
+        position: fixed;
+        bottom: 30px;
+        background: rgba(0,0,0,0.8);
+        border: 2px solid rgba(255,255,255,0.3);
+        color: white;
+        font-size: 18px;
+        border-radius: 50%;
+        width: 50px; 
+        height: 50px;
+        cursor: pointer;
+        z-index: 999;
+        backdrop-filter: blur(10px);
+      }
+      
+      #prevButton { left: 20px; }
+      #nextButton { right: 20px; }
+
+      /* Help Button */
+      #helpButton {
+        position: fixed;
+        top: 15px;
+        right: 15px;
+        background: rgba(255,255,255,0.2);
+        border: 1px solid rgba(255,255,255,0.3);
+        color: white;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        cursor: pointer;
+        z-index: 999;
+        font-size: 18px;
+        backdrop-filter: blur(10px);
+      }
+
+      @media (max-width: 480px) {
+        .marker-text { font-size: 16px; }
+        .marker-subtitle { font-size: 13px; }
+        #ui { font-size: 14px; padding: 8px 16px; }
+        .nav-button { width: 45px; height: 45px; font-size: 16px; }
+        .marker-sample { width: 100px; height: 100px; }
+      }
+
+      /* Loading indicator */
+      .loading {
+        position: fixed;
+        bottom: 50%;
+        left: 50%;
+        transform: translate(-50%, 50%);
+        color: white;
+        font-size: 14px;
+        z-index: 998;
+      }
+
+      .spinner {
+        border: 2px solid rgba(255,255,255,0.3);
+        border-radius: 50%;
+        border-top: 2px solid white;
+        width: 20px;
+        height: 20px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 10px;
+      }
+
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Marker Instructions -->
+    <div id="markerInstructions">
+      <div class="marker-icon">🎯</div>
+      <div class="marker-text">Arahkan kamera ke marker AR</div>
+      <button class="close-instructions" onclick="closeInstructions()">Mulai AR</button>
+    </div>
+
+    <!-- Loading -->
+    <div id="loading" class="loading" style="display: none;">
+      <div class="spinner"></div>
+      <div>Mencari marker...</div>
+    </div>
+
+    <!-- Help Button -->
+    <button id="helpButton" onclick="showInstructions()">?</button>
+
+    <!-- Title -->
+    <div id="ui">
+      <div id="title">Posko KKN</div>
+    </div>
+
+    <!-- Status -->
+    <div id="status">Marker tidak terdeteksi</div>
+
+    <!-- Navigation Buttons -->
+    <button id="prevButton" class="nav-button" onclick="prevVideo()">⏮</button>
+    <button id="nextButton" class="nav-button" onclick="nextVideo()">⏭</button>
+
+    <!-- AR Scene -->
+    <a-scene
+      embedded
+      arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
+      vr-mode-ui="enabled: false"
+      renderer="logarithmicDepthBuffer: true; antialias: true; colorManagement: true;"
+      loading-screen="enabled: false"
+      id="scene">
+      
+      <!-- Assets -->
+      <a-assets>
+        <video id="vid1" src="asset/POSKO.mp4" loop muted playsinline crossorigin="anonymous" preload="metadata"></video>
+        <video id="vid2" src="asset/Joglo.mov" loop muted playsinline crossorigin="anonymous" preload="metadata"></video>
+        <video id="vid3" src="asset/Plunyon.mov" loop muted playsinline crossorigin="anonymous" preload="metadata"></video>
+        <video id="vid4" src="asset/Batukapal.mov" loop muted playsinline crossorigin="anonymous" preload="metadata"></video>
+      </a-assets>
+      
+      <!-- Marker -->
+      <a-marker preset="hiro" id="marker">
+        <!-- Video Container -->
+        <a-entity id="videoContainer" position="0 0 0" rotation="0 0 0">
+          <!-- Video Plane -->
+          <a-plane 
+            id="videoPlane" 
+            position="0 0.01 0" 
+            rotation="-90 0 0" 
+            width="2" 
+            height="1.125" 
+            material="shader: flat; src: #vid1; opacity: 1; side: double;"
+            animation__scaleIn="property: scale; from: 0.1 0.1 0.1; to: 1 1 1; dur: 500; easing: easeOutBack; autoplay: false"
+            animation__fadeIn="property: material.opacity; from: 0; to: 1; dur: 300; autoplay: false">
+          </a-plane>
+          
+          <!-- Base/Platform -->
+          <a-box
+            position="0 -0.05 0"
+            width="2.1"
+            height="0.1"
+            depth="1.18"
+            material="color: #333; metalness: 0.8; roughness: 0.2;"
+            shadow="receive: true">
+          </a-box>
+    
+        </a-entity>
+      </a-marker>
+      
+      <!-- Camera -->
+      <a-entity camera></a-entity>
+    </a-scene>
+
+    <script>
+      const videos = [
+        { id: "#vid1", title: "Posko KKN" },
+        { id: "#vid2", title: "Joglo Wanagama" },
+        { id: "#vid3", title: "Jembatan Plunyon" },
+        { id: "#vid4", title: "Batu Kapal" }
+      ];
+
+      let currentIndex = 0;
+      let markerVisible = false;
+
+      const marker = document.getElementById("marker");
+      const videoPlane = document.getElementById("videoPlane");
+      const title = document.getElementById("title");
+      const status = document.getElementById("status");
+      const instructionOverlay = document.getElementById("markerInstructions");
+      const loading = document.getElementById("loading");
+
+      // Marker detection events
+      marker.addEventListener('markerFound', function() {
+        console.log('Marker found!');
+        markerVisible = true;
+        status.innerText = "Marker terdeteksi!";
+        status.classList.add("status-found");
+        loading.style.display = "none";
+        
+        // Play current video and animate
+        updateVideo();
+        videoPlane.emit('scaleIn');
+        videoPlane.emit('fadeIn');
+      });
+
+      marker.addEventListener('markerLost', function() {
+        console.log('Marker lost!');
+        markerVisible = false;
+        status.innerText = "Marker tidak terdeteksi";
+        status.classList.remove("status-found");
+        
+        // Pause all videos when marker is lost
+        videos.forEach(v => {
+          const videoEl = document.querySelector(v.id);
+          videoEl.pause();
+        });
+      });
+
+      function updateVideo() {
+        if (!markerVisible) return;
+        
+        const video = videos[currentIndex];
+        videoPlane.setAttribute("material", "src", video.id);
+        title.innerText = video.title;
+
+        // Stop all other videos
+        videos.forEach(v => {
+          const videoEl = document.querySelector(v.id);
+          videoEl.pause();
+        });
+
+        // Play current video
+        const currentVideoEl = document.querySelector(video.id);
+        if (currentVideoEl) {
+          currentVideoEl.currentTime = 0;
+          currentVideoEl.play().catch(e => console.log("Video play error:", e));
+        }
+
+        // Animate transition
+        videoPlane.emit('fadeIn');
+      }
+
+      function nextVideo() {
+        currentIndex = (currentIndex + 1) % videos.length;
+        updateVideo();
+      }
+
+      function prevVideo() {
+        currentIndex = (currentIndex - 1 + videos.length) % videos.length;
+        updateVideo();
+      }
+
+      function closeInstructions() {
+        instructionOverlay.style.display = "none";
+        loading.style.display = "block";
+      }
+
+      function showInstructions() {
+        instructionOverlay.style.display = "flex";
+      }
+
+      // Preload videos
+      videos.forEach(video => {
+        const videoEl = document.querySelector(video.id);
+        if (videoEl) {
+          videoEl.load();
+        }
+      });
+
+      // Prevent context menu
+      document.addEventListener("contextmenu", e => e.preventDefault());
+
+      // Auto-close instructions after 5 seconds
+      setTimeout(() => {
+        if (instructionOverlay.style.display !== "none") {
+          closeInstructions();
+        }
+      }, 8000);
+    </script>
+  </body>
+</html>
