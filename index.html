@@ -4,7 +4,6 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Cinemaps WebAR - Marker Based</title>
-    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.rawgit.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
     <style>
@@ -221,13 +220,8 @@
     <div id="status">Marker tidak terdeteksi</div>
 
     <!-- Navigation Buttons -->
-    <button id="prevButton" class="nav-button" title="Video Sebelumnya">
-    <i class="ri-arrow-left-line"></i>
-    </button>
-    
-    <button id="nextButton" class="nav-button" title="Video Selanjutnya">
-    <i class="ri-arrow-right-line"></i>
-    </button>
+    <button id="prevButton" class="nav-button" onclick="prevVideo()">⏮</button>
+    <button id="nextButton" class="nav-button" onclick="nextVideo()">⏭</button>
 
     <!-- AR Scene -->
     <a-scene
@@ -386,6 +380,4 @@
       }, 8000);
     </script>
   </body>
-
 </html>
-
